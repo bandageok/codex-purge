@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="240" viewBox="0 0 880 240" role="img" aria-label="codex-purge">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="0.55" stop-color="#111a33"/>
+      <stop offset="1" stop-color="#0a0f1c"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e8f0ff"/>
+      <stop offset="1" stop-color="#7dd3fc"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.5" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#1e293b" stroke-width="0.6" opacity="0.6"/>
+    </pattern>
+  </defs>
+
+  <rect width="880" height="240" fill="url(#bg)"/>
+  <rect width="880" height="240" fill="url(#grid)"/>
+  <rect x="0" y="0" width="880" height="3" fill="url(#bar)"/>
+
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">
+    <text x="48" y="86" font-size="46" font-weight="700" fill="url(#ink)" letter-spacing="1.2">codex-purge</text>
+    <text x="50" y="120" font-size="15" fill="#94a3b8" letter-spacing="0.4">OpenAI Codex CLI 的四层破甲 · 提示词 / 引擎 / 配置 / shim</text>
+
+    <g font-size="12.5" fill="#cbd5e1">
+      <rect x="48" y="146" width="150" height="28" rx="6" fill="#0f172a" stroke="#334155"/>
+      <text x="62" y="165">model_instructions</text>
+      <rect x="208" y="146" width="150" height="28" rx="6" fill="#0f172a" stroke="#334155"/>
+      <text x="222" y="165">developer_instructions</text>
+      <rect x="368" y="146" width="128" height="28" rx="6" fill="#0f172a" stroke="#334155"/>
+      <text x="382" y="165">approval: never</text>
+      <rect x="506" y="146" width="152" height="28" rx="6" fill="#0f172a" stroke="#334155"/>
+      <text x="520" y="165">sandbox: full-access</text>
+      <rect x="668" y="146" width="96" height="28" rx="6" fill="#0f172a" stroke="#334155"/>
+      <text x="682" y="165">shim: -p</text>
+    </g>
+
+    <text x="48" y="206" font-size="12" fill="#64748b">不改二进制 · 官方配置面拧到底 · 每次写入都可字节级回滚</text>
+    <text x="833" y="206" font-size="12" fill="#64748b" text-anchor="end">v0.1.0</text>
+  </g>
+</svg>
