@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  selftest:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ["18", "20", "22"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: selftest
+        run: node scripts/selftest.mjs
+
+  e2e:
+    # 端到端验证需要真实 codex CLI：只在 ubuntu + 单一 node 版本跑，避免多平台噪声
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: install codex cli
+        run: npm i -g @openai/codex@latest
+      - name: verify (capture-only mock endpoint)
+        run: node scripts/verify.mjs --timeout 60000

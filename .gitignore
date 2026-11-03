@@ -1,0 +1,14 @@
+node_modules/
+*.log
+*.bak
+.codexpurge.bak
+.DS_Store
+Thumbs.db
+tmp/
+out/
+.qa/
+.env
+.env.*
+*.pem
+*.key
+credentials.json

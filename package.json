@@ -1,0 +1,53 @@
+{
+  "name": "codex-purge",
+  "version": "0.1.0",
+  "description": "Codex 破甲：用受支持的配置面替换 Codex 基础指令、拆掉审批/沙箱门禁、注入去道德指令层。Jailbreak harness for OpenAI Codex CLI — prompt layer, developer layer, approval/sandbox engine layer, shim layer.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./core": "./lib/core.js",
+    "./verify": "./lib/verify.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "codex-purge": "bin/codex-purge.js"
+  },
+  "files": [
+    "lib",
+    "bin",
+    "presets",
+    "scripts",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "selftest": "node scripts/selftest.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "codex",
+    "openai-codex",
+    "codex-cli",
+    "jailbreak",
+    "破甲",
+    "红队评测",
+    "llm-security",
+    "harness",
+    "instructions",
+    "prompt-layer"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bandageok/codex-purge.git"
+  },
+  "homepage": "https://github.com/bandageok/codex-purge#readme",
+  "bugs": {
+    "url": "https://github.com/bandageok/codex-purge/issues"
+  },
+  "license": "MIT"
+}
