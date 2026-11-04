@@ -12,6 +12,17 @@
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-11-04
+
+### Fixed
+
+- **npm 全局安装布局识别**。`findNpmBin()` 原来只认 Windows 的 `<APPDATA>/npm/node_modules`；在 Linux/macOS 的全局安装（`/usr/local/bin` + `/usr/local/lib/node_modules`）下会返回 `pkg_root: null`，导致 `compat-scan` 在 CI 上直接 `未找到 codex 原生二进制`、release 流水线失败。现在用 `npm prefix -g` + 布局合并（bin 与包分处两地也能拼起来），并支持 `CODEX_PURGE_NPM_PREFIX` 显式指定前缀。
+- 原生二进制探测不再写死平台包名（`codex-linux-x64` 之类），改为扫描 `@openai/codex-*` 下的 `vendor/**`，跨平台/交叉安装都能找到。
+
+### Added
+
+- 自检新增两例：`*nix` 全局布局识别、`versionFromPath` 解析 → 18/18。
+
 ## [0.1.1] — 2026-11-04
 
 ### Added

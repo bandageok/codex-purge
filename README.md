@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=fff" alt="node">
   <img src="https://img.shields.io/badge/codex-0.163.0%20tested-000000" alt="codex">
   <img src="https://img.shields.io/badge/patches-14-6366f1" alt="patches">
-  <img src="https://img.shields.io/badge/version-0.1.1-0ea5e9" alt="version">
+  <img src="https://img.shields.io/badge/version-0.1.2-0ea5e9" alt="version">
   <a href="README.en.md"><img src="https://img.shields.io/badge/lang-EN-1a73e8" alt="English"></a>
 </p>
 

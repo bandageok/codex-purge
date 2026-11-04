@@ -270,6 +270,30 @@ test("versionFromPath: 从启动器路径向上解析版本", () => {
   assert.equal(paths.versionFromPath(path.join(root, "nope", "x.js")), null);
 });
 
+test("paths: 识别 *nix 全局布局（bin/ + lib/node_modules）", () => {
+  const prefix = tmpdir("prefix");
+  fsutil.ensureDir(path.join(prefix, "bin"));
+  const pkgRoot = path.join(prefix, "lib", "node_modules", "@openai", "codex");
+  fsutil.ensureDir(path.join(pkgRoot, "bin"));
+  fs.writeFileSync(path.join(pkgRoot, "package.json"), JSON.stringify({ name: "@openai/codex", version: "1.2.3" }));
+  fs.writeFileSync(path.join(pkgRoot, "bin", "codex.js"), "// stub");
+  fs.writeFileSync(path.join(prefix, "bin", "codex"), "#!/bin/sh\n");
+
+  const prevPrefix = process.env.CODEX_PURGE_NPM_PREFIX;
+  const prevCli = process.env.CODEX_PURGE_NO_NPM_CLI;
+  process.env.CODEX_PURGE_NPM_PREFIX = prefix;
+  process.env.CODEX_PURGE_NO_NPM_CLI = "1";
+  try {
+    const layouts = paths.listNpmLayouts();
+    const hit = layouts.find((l) => l.pkg_root === pkgRoot);
+    assert.ok(hit, `未识别 lib/node_modules 布局: ${JSON.stringify(layouts.map((l) => l.dir))}`);
+    assert.equal(paths.codexVersion(hit), "1.2.3");
+  } finally {
+    if (prevPrefix === undefined) delete process.env.CODEX_PURGE_NPM_PREFIX; else process.env.CODEX_PURGE_NPM_PREFIX = prevPrefix;
+    if (prevCli === undefined) delete process.env.CODEX_PURGE_NO_NPM_CLI; else process.env.CODEX_PURGE_NO_NPM_CLI = prevCli;
+  }
+});
+
 // ---------------------------------------------------------------- report
 const failed = results.filter((r) => !r.ok);
 console.log(`codex-purge selftest: ${results.length - failed.length}/${results.length} 通过`);
