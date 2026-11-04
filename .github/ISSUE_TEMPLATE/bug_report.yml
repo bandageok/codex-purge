@@ -1,0 +1,59 @@
+name: Bug 报告
+description: 状态不对、verify 不过、回滚不干净
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        先把这三条命令的输出贴上来，能省掉一半来回：
+
+        ```bash
+        node bin/codex-purge.js --status --json
+        node bin/codex-purge.js --verify
+        node scripts/compat-scan.mjs
+        ```
+  - type: input
+    id: codex-version
+    attributes:
+      label: codex 版本
+      description: codex --version 的输出
+      placeholder: codex-cli 0.166.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: 系统与 Node
+      placeholder: Windows 11 x64 / Node 24.13.0
+    validations:
+      required: true
+  - type: textarea
+    id: status-json
+    attributes:
+      label: --status --json 输出
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: verify
+    attributes:
+      label: --verify 输出
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 实际现象与预期
+      description: 哪条补丁是 pending？哪一行断言红了？有没有动过 --no-* 开关？
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 自查
+      options:
+        - label: 我贴的是临时 CODEX_HOME 或已脱敏的输出，没有贴密钥/token
+          required: true
+        - label: 我知道 `pending` 有时是「该版本没有这个开关」，并已附 compat-scan 输出
+          required: true

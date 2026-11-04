@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=fff" alt="node">
   <img src="https://img.shields.io/badge/codex-0.163.0%20tested-000000" alt="codex">
   <img src="https://img.shields.io/badge/patches-14-6366f1" alt="patches">
+  <img src="https://img.shields.io/badge/version-0.1.1-0ea5e9" alt="version">
   <a href="README.en.md"><img src="https://img.shields.io/badge/lang-EN-1a73e8" alt="English"></a>
 </p>
 
@@ -22,6 +23,7 @@
 ```bash
 codex-purge --apply     # 四层一次装好
 codex-purge --verify    # 本地抓包，看模型真正收到了什么
+codex-purge --diff      # 前后对照：同一个 prompt，差在哪几个 slot
 codex-purge --revert    # 一切归位
 ```
 
@@ -34,7 +36,8 @@ codex-purge --revert    # 一切归位
 - [为什么不动那 341 MB](#为什么不动那-341-mb)
 - [四层结构](#四层结构)
 - [补丁表](#补丁表14-条)
-- [验证](#验证三层)
+- [验证](#验证四层)
+- [支持矩阵与维护](#支持矩阵与维护)
 - [回滚契约](#回滚契约)
 - [命令手册](#命令手册)
 - [预设](#预设)
@@ -169,7 +172,7 @@ $CODEX_HOME
 
 ---
 
-## 验证（三层）
+## 验证（四层）
 
 **第一层 · 自检**（不需要 codex、不需要网络）
 
@@ -196,7 +199,35 @@ codex-purge 验证 / verify — 通过
   首条输入      <!-- codex-purge:instructions --> # 执行层指令…
 ```
 
-**第三层 · CI**：GitHub Actions 上跑 9 个矩阵（Ubuntu/macOS/Windows × Node 18/20/22）+ 一个真实安装 codex 的 `e2e` job。全绿。
+**第三层 · 上游兼容性探针**
+
+```bash
+node scripts/compat-scan.mjs        # 默认扫本机安装的原生二进制
+node scripts/compat-scan.mjs --binary <另一份 codex.exe>
+```
+
+把 14 条补丁依赖的配置键、枚举、参数、提示词标记在二进制里逐个定位并给出偏移。缺哪个，就精确知道哪条补丁会退化成 `pending`。
+
+**第四层 · CI**：9 个矩阵（Ubuntu/macOS/Windows × Node 18/20/22）+ 真实安装 codex 的 `e2e` job + 打 tag 时的 `release` 流水线。
+
+---
+
+## 支持矩阵与维护
+
+| codex 版本 | 怎么验的 | 结果 |
+| --- | --- | --- |
+| `0.163.0` | 本机抓包 + `compat-scan` | 14/14 探针命中 |
+| `0.166.0` | 隔离安装 + `--verify --codex-js` + `--diff` | 6/6 断言通过，14/14 探针命中 |
+
+```bash
+# 上游发新版，十分钟判断还能不能用：
+npm i @openai/codex@<version> --prefix /tmp/cx<version>
+node scripts/compat-scan.mjs --binary <新版>/.../codex.exe
+node bin/codex-purge.js --verify --codex-js <新版>/bin/codex.js
+node bin/codex-purge.js --diff   --codex-js <新版>/bin/codex.js
+```
+
+流程、排错表、发版命令、回归清单都在 [MAINTENANCE.md](MAINTENANCE.md)；改动历史在 [CHANGELOG.md](CHANGELOG.md)；提 PR 前读 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ---
 
@@ -227,6 +258,7 @@ codex-purge 验证 / verify — 通过
 | `--status` | 体检表：逐条补丁、路径、备份、生效来源 |
 | `--apply` | 应用四层（提示词 / 引擎 / profile / AGENTS.md / shim） |
 | `--verify` | 端到端抓包验证 |
+| `--diff` | 前后对照：同一 prompt，未清洗 vs 已清洗，逐 slot 列出字符数与 delta |
 | `--revert` | 回滚：shim 还原、受管块摘除、profile 与指令层删除 |
 | `--uninstall` | 回滚 + 删除 `$CODEX_HOME/codex-purge` |
 | `--edit` | 查看当前指令层前 40 行 |
@@ -243,6 +275,8 @@ codex-purge 验证 / verify — 通过
 | `--flags "<args>"` | shim 注入参数，默认 `-p codex-purge --dangerously-bypass-approvals-and-sandbox` |
 | `--home <dir>` | 覆盖 `CODEX_HOME`（测试用） |
 | `--keep-instructions` | revert 时保留指令层 |
+| `--codex-js <path>` | verify/diff 用另一份 codex 启动器（验证上游新版，不动本机安装） |
+| `--json` | status / verify / diff 输出 JSON，便于接 CI 门禁 |
 
 ---
 

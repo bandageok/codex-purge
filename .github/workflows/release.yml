@@ -1,0 +1,59 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "tag 名（如 v0.1.1）"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: selftest
+        run: node scripts/selftest.mjs
+
+      - name: install codex cli
+        run: npm i -g @openai/codex@latest
+
+      - name: compat-scan
+        run: node scripts/compat-scan.mjs
+
+      - name: verify
+        run: node bin/codex-purge.js --verify --timeout 60000
+
+      - name: changelog section
+        id: notes
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
+          python3 - "$VERSION" <<'PY' > notes.md
+          import re, sys, pathlib
+          version = sys.argv[1]
+          text = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          m = re.search(rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## |\Z)", text, re.S | re.M)
+          print(m.group(1).strip() if m else f"codex-purge {version}")
+          PY
+          cat notes.md
+
+      - name: create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md --verify-tag || \
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md

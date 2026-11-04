@@ -1,0 +1,37 @@
+name: 功能建议
+description: 新预设、新命令、新的验证维度
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你想解决什么
+      description: 描述场景，不要只写「加个功能」
+      placeholder: 我想在 CI 里判断「今天上游新版还能不能破甲」，现在得人工看输出
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你设想的形态
+      placeholder: 一个 `--json` 的 verify 输出 + 非零退出码，就能直接当门禁
+  - type: dropdown
+    id: layer
+    attributes:
+      label: 涉及哪一层
+      multiple: true
+      options:
+        - 提示词层（instructions / developer / presets）
+        - 引擎层（approval / sandbox / include_*）
+        - 配置层（profile / config.toml 受管块）
+        - shim 层（启动器接管）
+        - 验证与工具链（verify / diff / compat-scan / selftest）
+    validations:
+      required: true
+  - type: checkboxes
+    id: reversible
+    attributes:
+      label: 可回滚性
+      options:
+        - label: 这个改动仍然可以用 `--revert` 回到原件（或说明为什么不能）
+          required: true

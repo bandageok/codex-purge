@@ -15,6 +15,7 @@ const MODES = [
   "--revert",
   "--uninstall",
   "--verify",
+  "--diff",
   "--edit",
   "--swap",
   "--prompts",
@@ -37,6 +38,8 @@ function printHelp() {
   codex-purge --status               显示状态（补丁逐条、profile、shim、生效来源）
   codex-purge --apply                应用全部清洗（提示词 + 引擎 + profile + AGENTS.md + shim）
   codex-purge --verify               端到端验证（本地抓包，看模型真正收到的输入）
+  codex-purge --diff                 前后对照（同一 prompt，未清洗 vs 已清洗）
+  codex-purge --status --json        机器可读状态
   codex-purge --revert               回滚（shim 还原、受管块摘除、profile 与指令层删除）
   codex-purge --uninstall            回滚并删除 \$CODEX_HOME/codex-purge 目录
   codex-purge --edit                 编辑指令层后重新写入
@@ -51,6 +54,8 @@ function printHelp() {
   --no-shims            不接管启动器（直接运行 codex 不会带 -p codex-purge）
   --flags "<flags>"     shim 注入的参数（默认: -p codex-purge --dangerously-bypass-approvals-and-sandbox）
   --home <dir>          覆盖 CODEX_HOME
+  --codex-js <path>     verify/diff 指定另一份 codex 启动器（测上游新版）
+  --json                机器可读输出（status / verify / diff）
   --keep-instructions   revert 时保留指令层文件
 
 预设 / presets: ${presets.length ? presets.join(", ") : "(无)"}
@@ -69,6 +74,9 @@ async function main() {
     shims: !has("--no-shims"),
     keepInstructions: has("--keep-instructions"),
     flags: argValue("--flags") ? argValue("--flags").split(/\s+/) : undefined,
+    codexJs: argValue("--codex-js") || undefined,
+    json: has("--json"),
+    timeoutMs: Number(argValue("--timeout") || 30000),
   };
 
   switch (mode) {
@@ -84,6 +92,11 @@ async function main() {
 
     case "--status": {
       const state = core.status({ home });
+      if (opts.json) {
+        console.log(JSON.stringify({ ...state, patches: core.ALL_PATCHES }, null, 2));
+        process.exitCode = state.patches_pending === 0 ? 0 : 0;
+        return;
+      }
       console.log(core.summarize(state));
       return;
     }
@@ -128,8 +141,15 @@ async function main() {
     }
 
     case "--verify": {
-      const result = await verify.verify({ home, timeoutMs: Number(argValue("--timeout") || 30000) });
-      console.log(verify.summarizeVerify(result));
+      const result = await verify.verify({ home, timeoutMs: opts.timeoutMs, codexJs: opts.codexJs });
+      console.log(opts.json ? JSON.stringify(result, null, 2) : verify.summarizeVerify(result));
+      process.exitCode = result.ok ? 0 : 1;
+      return;
+    }
+
+    case "--diff": {
+      const result = await verify.diff({ home, timeoutMs: opts.timeoutMs, codexJs: opts.codexJs });
+      console.log(opts.json ? JSON.stringify(result, null, 2) : verify.summarizeDiff(result));
       process.exitCode = result.ok ? 0 : 1;
       return;
     }

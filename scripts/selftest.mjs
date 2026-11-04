@@ -16,6 +16,7 @@ import * as shim from "../lib/shim.js";
 import * as core from "../lib/core.js";
 import * as paths from "../lib/paths.js";
 import * as fsutil from "../lib/fsutil.js";
+import * as verify from "../lib/verify.js";
 
 const results = [];
 function test(name, fn) {
@@ -234,6 +235,39 @@ await testAsync("core: 二次 apply 不污染备份（脏备份回归）", async
   const agentsLeft = fsutil.readTextOrNull(path.join(home, "AGENTS.md"));
   assert.ok(agentsLeft == null || !agents.hasBlock(agentsLeft), `AGENTS.md 仍带受管块: ${agentsLeft}`);
   assert.equal(core.status({ home }).patches_applied, 0);
+});
+
+// ---------------------------------------------------------------- diff / version
+test("diff: 对照表按 slot 对齐并算出 delta", () => {
+  const result = {
+    ok: true,
+    version: "0.166.0",
+    bytes_before: 42237,
+    bytes_after: 25939,
+    base_prompt_before: true,
+    base_prompt_after: false,
+    danger_before: false,
+    danger_after: true,
+    rows: [
+      { slot: "input[0]", role: "developer", before_len: 17174, after_len: 1381, before_head: "You are a coding agent", after_head: "<!-- codex-purge:instructions -->", delta: -15793 },
+      { slot: "input[3]", role: "user", before_len: 17, after_len: 17, before_head: "codex-purge probe", after_head: "codex-purge probe", delta: 0 },
+    ],
+  };
+  const text = verify.summarizeDiff(result);
+  assert.ok(text.includes("input[0]"));
+  assert.ok(text.includes("-15793"));
+  assert.ok(text.includes("未清洗 在 → 已清洗 不在"));
+});
+
+test("versionFromPath: 从启动器路径向上解析版本", () => {
+  const root = tmpdir("ver");
+  const pkgDir = path.join(root, "node_modules", "@openai", "codex");
+  fsutil.ensureDir(path.join(pkgDir, "bin"));
+  fs.writeFileSync(path.join(pkgDir, "package.json"), JSON.stringify({ name: "@openai/codex", version: "9.9.9" }));
+  const launcher = path.join(pkgDir, "bin", "codex.js");
+  fs.writeFileSync(launcher, "// stub");
+  assert.equal(paths.versionFromPath(launcher), "9.9.9");
+  assert.equal(paths.versionFromPath(path.join(root, "nope", "x.js")), null);
 });
 
 // ---------------------------------------------------------------- report

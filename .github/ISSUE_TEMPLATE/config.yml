@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 上游版本兼容性怎么看
+    url: https://github.com/bandageok/codex-purge/blob/main/MAINTENANCE.md
+    about: 升级后先跑 compat-scan + verify --codex-js，再看支持矩阵
+  - name: 回滚不干净 / 启动器坏了
+    url: https://github.com/bandageok/codex-purge/blob/main/MAINTENANCE.md
+    about: --revert 会从 <file>.codexpurge.bak 还原；先看维护手册的排错表

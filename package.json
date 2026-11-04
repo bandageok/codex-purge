@@ -1,6 +1,6 @@
 {
   "name": "codex-purge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Codex 破甲：用受支持的配置面替换 Codex 基础指令、拆掉审批/沙箱门禁、注入去道德指令层。Jailbreak harness for OpenAI Codex CLI — prompt layer, developer layer, approval/sandbox engine layer, shim layer.",
   "type": "module",
   "main": "lib/index.js",
@@ -18,13 +18,19 @@
     "bin",
     "presets",
     "scripts",
+    "docs",
     "README.md",
-    "README.zh-CN.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "MAINTENANCE.md",
+    "CONTRIBUTING.md",
     "LICENSE"
   ],
   "scripts": {
     "selftest": "node scripts/selftest.mjs",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "diff": "node bin/codex-purge.js --diff",
+    "compat": "node scripts/compat-scan.mjs"
   },
   "engines": {
     "node": ">=18"

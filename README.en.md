@@ -22,6 +22,7 @@
 ```bash
 codex-purge --apply     # install all four layers
 codex-purge --verify    # capture what the model actually receives
+codex-purge --diff      # before/after, slot by slot
 codex-purge --revert    # put everything back
 ```
 
@@ -107,7 +108,17 @@ $CODEX_HOME
 
 1. `node scripts/selftest.mjs` — 15 assertions, no codex, no network (TOML placement, marker idempotency, AGENTS.md round-trip, shim restore, second-apply backup hygiene).
 2. `node scripts/verify.mjs` — capture-only endpoint + real `codex exec`; asserts the instructions layer is `input[0]`, the base prompt is gone, `danger-full-access` is present, the permissions block is absent.
-3. CI — 9 matrix jobs (Ubuntu/macOS/Windows × Node 18/20/22) plus an `e2e` job that installs real codex. All green.
+3. `node scripts/compat-scan.mjs` — locates every config key / flag / prompt marker the 14 patches depend on inside the native binary, so a new upstream release tells you exactly which patch will degrade to `pending`.
+4. CI — 9 matrix jobs (Ubuntu/macOS/Windows × Node 18/20/22), an `e2e` job with real codex, and a `release` workflow on tags.
+
+## Support matrix
+
+| codex | how it was checked | result |
+| --- | --- | --- |
+| `0.163.0` | local capture + compat-scan | 14/14 probes |
+| `0.166.0` | isolated install + `--verify --codex-js` + `--diff` | 6/6 assertions, 14/14 probes |
+
+Upgrade playbook: [MAINTENANCE.md](MAINTENANCE.md). History: [CHANGELOG.md](CHANGELOG.md). Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Rollback contract
 
@@ -117,9 +128,9 @@ $CODEX_HOME
 
 ## Command reference
 
-`--status` · `--apply` · `--verify` · `--revert` · `--uninstall` · `--edit` · `--swap <preset>` · `--prompts`
+`--status` · `--apply` · `--verify` · `--diff` · `--revert` · `--uninstall` · `--edit` · `--swap <preset>` · `--prompts`
 
-Options: `--preset`, `--prompt-file`, `--no-config-block`, `--no-agents`, `--no-shims`, `--flags`, `--home`, `--keep-instructions`.
+Options: `--preset`, `--prompt-file`, `--no-config-block`, `--no-agents`, `--no-shims`, `--flags`, `--home`, `--keep-instructions`, `--codex-js`, `--json`.
 
 Presets: `strict` (default tone), `soft`, `ctf`, `research`.
 
