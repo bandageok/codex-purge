@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "tag 名（如 v0.1.1）"
+        description: "tag 名（如 v0.1.2）"
         required: true
 
 permissions:
@@ -48,12 +48,25 @@ jobs:
           m = re.search(rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## |\Z)", text, re.S | re.M)
           print(m.group(1).strip() if m else f"codex-purge {version}")
           PY
-          cat notes.md
+          echo "notes:"; cat notes.md
 
-      - name: create release
+      # 幂等：GitHub API 偶尔 502 但其实已创建，所以先查再改，最后才创建。
+      # 三次尝试，每次失败都重新判断「到底存不存在」，避免 422 tag_name already exists。
+      - name: upsert release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -u
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
-          gh release create "$TAG" --title "$TAG" --notes-file notes.md --verify-tag || \
-          gh release create "$TAG" --title "$TAG" --notes-file notes.md
+          for attempt in 1 2 3; do
+            if gh release view "$TAG" > /dev/null 2>&1; then
+              echo "release $TAG 已存在 → 用 notes 更新（第 $attempt 次）"
+              if gh release edit "$TAG" --title "$TAG" --notes-file notes.md; then exit 0; fi
+            else
+              echo "release $TAG 不存在 → 创建（第 $attempt 次）"
+              if gh release create "$TAG" --title "$TAG" --notes-file notes.md --verify-tag; then exit 0; fi
+            fi
+            sleep $((attempt * 5))
+          done
+          echo "三次尝试均失败" >&2
+          exit 1
