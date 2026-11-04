@@ -58,7 +58,7 @@ git push origin main --tags        # tag 会触发 release.yml
 
 ## 四、回归清单（每次发版前）
 
-- [ ] `node scripts/selftest.mjs` → 15/15
+- [ ] `node scripts/selftest.mjs` → 18/18
 - [ ] `node bin/codex-purge.js --verify` → 6/6
 - [ ] `node scripts/compat-scan.mjs` → 全部命中
 - [ ] `--diff` 的 `input[0]` 明显变小

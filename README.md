@@ -180,7 +180,7 @@ $CODEX_HOME
 node scripts/selftest.mjs
 ```
 
-15 项：提示词解析、TOML 受管块位置、受管块幂等、三引号转义、AGENTS.md 往返、shim 接管与字节级还原、apply→全层就位、`--no-*` 开关、空 config 插入、预设切换、**二次 apply 不污染备份**。
+18 项：提示词解析、TOML 受管块位置、受管块幂等、三引号转义、AGENTS.md 往返、shim 接管与字节级还原、apply→全层就位、`--no-*` 开关、空 config 插入、预设切换、**二次 apply 不污染备份**、`--diff` 表格、版本解析、**`*nix` 全局布局识别**。
 
 **第二层 · 端到端抓包**（需要本机 codex）
 
@@ -339,7 +339,7 @@ lib/verify.js          端到端抓包验证
 lib/paths.js           跨平台路径与宿主探测
 lib/fsutil.js          备份 / 快照 / 原子写 / 哈希
 presets/*.md           strict · soft · ctf · research
-scripts/selftest.mjs   15 项自检
+scripts/selftest.mjs   18 项自检
 scripts/verify.mjs     端到端验证入口
 docs/banner.svg        头图
 ```
