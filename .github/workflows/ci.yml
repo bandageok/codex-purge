@@ -15,7 +15,7 @@ jobs:
         node: ["18", "20", "22"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -26,7 +26,7 @@ jobs:
     # 端到端验证需要真实 codex CLI：只在 ubuntu + 单一 node 版本跑，避免多平台噪声
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
