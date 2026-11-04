@@ -17,6 +17,7 @@ import * as core from "../lib/core.js";
 import * as paths from "../lib/paths.js";
 import * as fsutil from "../lib/fsutil.js";
 import * as verify from "../lib/verify.js";
+import { scan, PROBES, detectVersion } from "./compat-scan.mjs";
 
 const results = [];
 function test(name, fn) {
@@ -292,6 +293,48 @@ test("paths: 识别 *nix 全局布局（bin/ + lib/node_modules）", () => {
     if (prevPrefix === undefined) delete process.env.CODEX_PURGE_NPM_PREFIX; else process.env.CODEX_PURGE_NPM_PREFIX = prevPrefix;
     if (prevCli === undefined) delete process.env.CODEX_PURGE_NO_NPM_CLI; else process.env.CODEX_PURGE_NO_NPM_CLI = prevCli;
   }
+});
+
+// ---------------------------------------------------------------- compat-scan
+function fakeBinary(payload) {
+  const dir = tmpdir("bin");
+  const file = path.join(dir, "codex.exe");
+  fs.writeFileSync(file, Buffer.concat([Buffer.from("ELF"), Buffer.alloc(32), Buffer.from(payload, "utf8"), Buffer.alloc(32)]));
+  return file;
+}
+
+test("compat-scan: 全部探针命中时报无缺失", () => {
+  const all = PROBES.map((p) => p.key).join(" ");
+  const result = scan(fakeBinary(all));
+  assert.equal(result.missing.length, 0, `误报缺失: ${result.missing.map((m) => m.key).join(",")}`);
+  assert.equal(result.rows.length, PROBES.length);
+  assert.ok(result.rows.every((r) => r.present && typeof r.offset === "number"));
+});
+
+test("compat-scan: 缺键时报出对应补丁号", () => {
+  const withGap = PROBES.filter((p) => p.patch !== 2).map((p) => p.key).join(" ");
+  const result = scan(fakeBinary(withGap));
+  assert.deepEqual(result.missing.map((m) => m.patch), [2]);
+  assert.equal(result.missing[0].key, "model_instructions_file");
+});
+
+test("compat-scan: 参数名不带前导 -- 也能命中（clap 命名）", () => {
+  const onlyBare = "dangerously-bypass-approvals-and-sandbox";
+  const result = scan(fakeBinary(onlyBare));
+  const row = result.rows.find((r) => r.patch === 12);
+  assert.ok(row.present, "bare 参数名未命中");
+  const withDashes = scan(fakeBinary("--" + onlyBare)).rows.find((r) => r.patch === 12);
+  assert.ok(withDashes.present, "带 -- 的参数名未命中");
+});
+
+test("compat-scan: 版本从相邻 package.json 读取并去掉平台后缀", () => {
+  const dir = tmpdir("pkgver");
+  const binDir = path.join(dir, "vendor", "x86_64-pc-windows-msvc", "bin");
+  fsutil.ensureDir(binDir);
+  const binary = path.join(binDir, "codex.exe");
+  fs.writeFileSync(binary, "x");
+  fs.writeFileSync(path.join(dir, "codex-package.json"), JSON.stringify({ name: "@openai/codex-win32-x64", version: "0.166.0-win32-x64" }));
+  assert.equal(detectVersion(binary), "0.166.0");
 });
 
 // ---------------------------------------------------------------- report

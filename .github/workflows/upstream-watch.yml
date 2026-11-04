@@ -1,0 +1,116 @@
+name: upstream-watch
+
+# 上游兼容性巡检：每天装一次最新 @openai/codex，跑探针与端到端验证。
+# 失败就开 issue（已有同名 issue 则追加评论），不需要人盯着 npm。
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: install latest codex
+        run: npm i -g @openai/codex@latest
+
+      - name: record version
+        id: ver
+        run: |
+          VERSION=$(node -e "import('./lib/paths.js').then(m=>console.log(m.codexVersion()||'unknown'))")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "codex 版本: $VERSION"
+
+      - name: selftest
+        run: node scripts/selftest.mjs
+
+      - name: compat-scan
+        id: compat
+        run: |
+          set +e
+          node scripts/compat-scan.mjs --json > compat.json
+          CODE=$?
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          set -e
+          cat compat.json
+
+      - name: verify
+        id: verify
+        run: |
+          set +e
+          node bin/codex-purge.js --verify --json --timeout 60000 > verify.json
+          CODE=$?
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          set -e
+          cat verify.json
+
+      - name: ensure label
+        if: steps.compat.outputs.code != '0' || steps.verify.outputs.code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh label create upstream --description "上游兼容性巡检" --color FBCA04 || true
+
+      - name: open or update issue
+        if: steps.compat.outputs.code != '0' || steps.verify.outputs.code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          COMPAT_CODE: ${{ steps.compat.outputs.code }}
+          VERIFY_CODE: ${{ steps.verify.outputs.code }}
+        run: |
+          set -euo pipefail
+          TITLE="upstream: codex ${VERSION} 兼容性回归"
+          {
+            echo "## 巡检结果"
+            echo
+            echo "| 项 | 退出码 |"
+            echo "| --- | --- |"
+            echo "| compat-scan | ${COMPAT_CODE} |"
+            echo "| verify | ${VERIFY_CODE} |"
+            echo
+            echo "运行记录：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            echo "### compat-scan（缺失项）"
+            echo '```json'
+            node -e 'const fs=require("fs");let d={};try{d=JSON.parse(fs.readFileSync("compat.json","utf8")||"{}")}catch(e){d={parse_error:String(e)}}console.log(JSON.stringify({version:d.version,missing:d.missing||[]},null,2))'
+            echo '```'
+            echo
+            echo "### verify（失败断言）"
+            echo '```json'
+            node -e 'const fs=require("fs");let d={};try{d=JSON.parse(fs.readFileSync("verify.json","utf8")||"{}")}catch(e){d={parse_error:String(e)}}const failed=(d.checks||[]).filter(c=>!c.ok);console.log(JSON.stringify({version:d.version,failed},null,2))'
+            echo '```'
+            echo
+            echo "处理流程见 [MAINTENANCE.md](../blob/main/MAINTENANCE.md)：先改探针键名，再改代码，最后跑 selftest。"
+          } > body.md
+
+          EXISTING=$(gh issue list --state open --search "in:title ${TITLE}" --json number,title \
+            --jq ".[] | select(.title == \"${TITLE}\") | .number" | head -1)
+          if [ -n "${EXISTING}" ]; then
+            echo "已存在 issue #${EXISTING} → 追加评论"
+            gh issue comment "${EXISTING}" --body-file body.md
+          else
+            echo "新建 issue"
+            gh issue create --title "${TITLE}" --body-file body.md --label upstream
+          fi
+
+      - name: summary
+        if: always()
+        run: |
+          {
+            echo "### upstream-watch"
+            echo
+            echo "- codex: ${{ steps.ver.outputs.version }}"
+            echo "- compat-scan 退出码: ${{ steps.compat.outputs.code }}"
+            echo "- verify 退出码: ${{ steps.verify.outputs.code }}"
+          } >> "$GITHUB_STEP_SUMMARY"

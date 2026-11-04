@@ -34,6 +34,28 @@ node bin/codex-purge.js --diff   --codex-js <新版>/bin/codex.js
 - `CHANGELOG.md` 的支持矩阵加一行；
 - 如果键名/行为有变，写进 `[Unreleased] → Changed`，并说明哪条补丁受影响。
 
+## 一·五、自动巡检（不用人盯）
+
+`.github/workflows/upstream-watch.yml`：
+
+- 每天 **03:17 UTC** 装最新 `@openai/codex`，跑 `selftest` → `compat-scan --json` → `--verify --json`。
+- 任一步非零 → 自动开 issue，标题 `upstream: codex <版本> 兼容性回归`，标 `upstream`；同名 issue 已存在就追加评论（不刷屏）。
+- issue 正文里直接贴缺失探针的 JSON 与失败断言，按本文第一节处理即可。
+
+手动触发：`gh workflow run upstream-watch.yml`。想验证上报逻辑本身，可以本地用 stub `gh` 跑工作流里的 `open or update issue` 脚本：
+
+```bash
+mkdir -p /tmp/wf/stub && cat > /tmp/wf/stub/gh <<'EOF'
+#!/bin/sh
+echo "[gh] $*" >> "$STUB_LOG"
+[ "$1 $2" = "issue list" ] && echo 42
+exit 0
+EOF
+chmod +x /tmp/wf/stub/gh
+# 把工作流里的脚本存成 run-issue.sh，然后：
+STUB_LOG=/tmp/wf/log PATH=/tmp/wf/stub:$PATH VERSION=9.9.9 COMPAT_CODE=1 VERIFY_CODE=1   GITHUB_SERVER_URL=https://github.com GITHUB_REPOSITORY=you/repo GITHUB_RUN_ID=1 bash run-issue.sh
+```
+
 ## 二、上游改了行为（不是改名）
 
 判断方法：探针全中但 `verify` 失败 → 行为变了。常见三类：
@@ -58,12 +80,12 @@ git push origin main --tags        # tag 会触发 release.yml
 
 ## 四、回归清单（每次发版前）
 
-- [ ] `node scripts/selftest.mjs` → 18/18
+- [ ] `node scripts/selftest.mjs` → 22/22
 - [ ] `node bin/codex-purge.js --verify` → 6/6
 - [ ] `node scripts/compat-scan.mjs` → 全部命中
 - [ ] `--diff` 的 `input[0]` 明显变小
 - [ ] 本机 `codex.cmd` / `codex.ps1` 的 `md5sum` 在 `--revert` 后与原件一致
-- [ ] CI 绿（9 矩阵 + e2e）
+- [ ] CI 绿（9 矩阵 + e2e），`upstream-watch` 手动触发一次也是绿
 
 ## 五、别做的事
 

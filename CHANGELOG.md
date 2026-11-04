@@ -12,6 +12,18 @@
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-11-04
+
+### Added
+
+- `.github/workflows/upstream-watch.yml`：每天 03:17 UTC 安装最新 `@openai/codex`，跑 `selftest` → `compat-scan --json` → `--verify --json`；回归时自动开 issue（同名 issue 已存在则追加评论），正文含缺失探针与失败断言。
+- `compat-scan` 单测 4 例：全中、缺键定位补丁号、clap 参数名（带/不带 `--`）、版本平台后缀剥离 → 自检 18 → **22 项**。
+- 维护手册新增「自动巡检」一节，含本地用 stub `gh` 验证上报分支的做法。
+
+### Changed
+
+- 工作流的 JSON 提取从 `python3` 改为 `node -e`：这个 job 里 node 必然存在，也不受本地 Windows 上 `python3` 是 Store 占位符的影响。
+
 ## [0.1.2] — 2026-11-04
 
 ### Fixed

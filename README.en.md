@@ -106,10 +106,10 @@ $CODEX_HOME
 
 ## Verification, three tiers
 
-1. `node scripts/selftest.mjs` — 18 assertions, no codex, no network (TOML placement, marker idempotency, AGENTS.md round-trip, shim restore, second-apply backup hygiene).
+1. `node scripts/selftest.mjs` — 22 assertions, no codex, no network (TOML placement, marker idempotency, AGENTS.md round-trip, shim restore, second-apply backup hygiene).
 2. `node scripts/verify.mjs` — capture-only endpoint + real `codex exec`; asserts the instructions layer is `input[0]`, the base prompt is gone, `danger-full-access` is present, the permissions block is absent.
 3. `node scripts/compat-scan.mjs` — locates every config key / flag / prompt marker the 14 patches depend on inside the native binary, so a new upstream release tells you exactly which patch will degrade to `pending`.
-4. CI — 9 matrix jobs (Ubuntu/macOS/Windows × Node 18/20/22), an `e2e` job with real codex, and a `release` workflow on tags.
+4. CI — 9 matrix jobs (Ubuntu/macOS/Windows × Node 18/20/22), an `e2e` job with real codex, a `release` workflow on tags, and `upstream-watch`: every day it installs the latest codex, runs compat-scan + verify, and files an `upstream` issue when something regresses.
 
 ## Support matrix
 

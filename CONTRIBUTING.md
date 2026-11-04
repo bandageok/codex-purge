@@ -8,7 +8,7 @@
 ## 三条命令
 
 ```bash
-node scripts/selftest.mjs          # 18 项，秒级，不联网
+node scripts/selftest.mjs          # 22 项，秒级，不联网
 node bin/codex-purge.js --verify   # 端到端抓包（需要 codex）
 node scripts/compat-scan.mjs       # 上游依赖探针
 ```

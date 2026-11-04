@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=fff" alt="node">
   <img src="https://img.shields.io/badge/codex-0.163.0%20tested-000000" alt="codex">
   <img src="https://img.shields.io/badge/patches-14-6366f1" alt="patches">
-  <img src="https://img.shields.io/badge/version-0.1.2-0ea5e9" alt="version">
+  <img src="https://img.shields.io/badge/version-0.1.3-0ea5e9" alt="version">
   <a href="README.en.md"><img src="https://img.shields.io/badge/lang-EN-1a73e8" alt="English"></a>
 </p>
 
@@ -180,7 +180,7 @@ $CODEX_HOME
 node scripts/selftest.mjs
 ```
 
-18 项：提示词解析、TOML 受管块位置、受管块幂等、三引号转义、AGENTS.md 往返、shim 接管与字节级还原、apply→全层就位、`--no-*` 开关、空 config 插入、预设切换、**二次 apply 不污染备份**、`--diff` 表格、版本解析、**`*nix` 全局布局识别**。
+22 项：提示词解析、TOML 受管块位置、受管块幂等、三引号转义、AGENTS.md 往返、shim 接管与字节级还原、apply→全层就位、`--no-*` 开关、空 config 插入、预设切换、**二次 apply 不污染备份**、`--diff` 表格、版本解析、**`*nix` 全局布局识别**、**探针四项（全中 / 缺键 / clap 参数名 / 版本后缀）**。
 
 **第二层 · 端到端抓包**（需要本机 codex）
 
@@ -208,7 +208,11 @@ node scripts/compat-scan.mjs --binary <另一份 codex.exe>
 
 把 14 条补丁依赖的配置键、枚举、参数、提示词标记在二进制里逐个定位并给出偏移。缺哪个，就精确知道哪条补丁会退化成 `pending`。
 
-**第四层 · CI**：9 个矩阵（Ubuntu/macOS/Windows × Node 18/20/22）+ 真实安装 codex 的 `e2e` job + 打 tag 时的 `release` 流水线。
+**第四层 · CI 与上游巡检**
+
+- `ci.yml`：9 个矩阵（Ubuntu/macOS/Windows × Node 18/20/22）+ 真实安装 codex 的 `e2e` job。
+- `release.yml`：打 tag → selftest → compat-scan → verify → 幂等更新 Release 说明。
+- `upstream-watch.yml`：每天 03:17 UTC 装一次最新 `@openai/codex`，跑探针与端到端验证；回归就自动开 issue（同名 issue 已存在则追加评论），带缺失项与失败断言。
 
 ---
 
@@ -228,6 +232,8 @@ node bin/codex-purge.js --diff   --codex-js <新版>/bin/codex.js
 ```
 
 流程、排错表、发版命令、回归清单都在 [MAINTENANCE.md](MAINTENANCE.md)；改动历史在 [CHANGELOG.md](CHANGELOG.md)；提 PR 前读 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+上游一动就会有人替你发现：`upstream-watch` 每天跑一次，回归自动开 issue（标 `upstream`）。
 
 ---
 
@@ -339,7 +345,7 @@ lib/verify.js          端到端抓包验证
 lib/paths.js           跨平台路径与宿主探测
 lib/fsutil.js          备份 / 快照 / 原子写 / 哈希
 presets/*.md           strict · soft · ctf · research
-scripts/selftest.mjs   18 项自检
+scripts/selftest.mjs   22 项自检
 scripts/verify.mjs     端到端验证入口
 docs/banner.svg        头图
 ```
