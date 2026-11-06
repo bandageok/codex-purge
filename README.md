@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=fff" alt="node">
   <img src="https://img.shields.io/badge/codex-0.163.0%20tested-000000" alt="codex">
   <img src="https://img.shields.io/badge/patches-14-6366f1" alt="patches">
-  <img src="https://img.shields.io/badge/version-0.1.3-0ea5e9" alt="version">
+  <img src="https://img.shields.io/badge/version-0.1.4-0ea5e9" alt="version">
   <a href="README.en.md"><img src="https://img.shields.io/badge/lang-EN-1a73e8" alt="English"></a>
 </p>
 
@@ -137,6 +137,7 @@ $CODEX_HOME
 | 在 skills/permissions 之前再压一层规则 | `developer_instructions = "…"` | `input[1]` 头部 |
 | 不要审批弹窗 | `approval_policy = "never"` | 引擎 |
 | 全盘读写，不问目录 | `sandbox_mode = "danger-full-access"` | 引擎 |
+| 用户本来写过 `approval_policy` | 冲突行被注释留痕后让位 | `config.toml` |
 | 别再念沙箱/应用/协同说明 | `include_permissions_instructions = false` 等三项 | 引擎 |
 | 每次启动自动带上 | shim 注入 `-p codex-purge` | 启动器 |
 
@@ -177,10 +178,11 @@ $CODEX_HOME
 **第一层 · 自检**（不需要 codex、不需要网络）
 
 ```bash
-node scripts/selftest.mjs
+node scripts/selftest.mjs        # 23 项
+node scripts/regressions.mjs     # 9 项实测回归（每一条都是真复现过的故障）
 ```
 
-22 项：提示词解析、TOML 受管块位置、受管块幂等、三引号转义、AGENTS.md 往返、shim 接管与字节级还原、apply→全层就位、`--no-*` 开关、空 config 插入、预设切换、**二次 apply 不污染备份**、`--diff` 表格、版本解析、**`*nix` 全局布局识别**、**探针四项（全中 / 缺键 / clap 参数名 / 版本后缀）**。
+23 项：提示词解析、TOML 受管块位置、受管块幂等、三引号转义、AGENTS.md 往返、shim 接管与字节级还原、apply→全层就位、`--no-*` 开关、空 config 插入、预设切换、**二次 apply 不污染备份**、`--diff` 表格、版本解析、**`*nix` 全局布局识别**、**探针四项（全中 / 缺键 / clap 参数名 / 版本后缀）**。
 
 **第二层 · 端到端抓包**（需要本机 codex）
 
@@ -345,7 +347,7 @@ lib/verify.js          端到端抓包验证
 lib/paths.js           跨平台路径与宿主探测
 lib/fsutil.js          备份 / 快照 / 原子写 / 哈希
 presets/*.md           strict · soft · ctf · research
-scripts/selftest.mjs   22 项自检
+scripts/selftest.mjs   23 项自检
 scripts/verify.mjs     端到端验证入口
 docs/banner.svg        头图
 ```

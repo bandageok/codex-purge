@@ -8,7 +8,8 @@
 ## 三条命令
 
 ```bash
-node scripts/selftest.mjs          # 22 项，秒级，不联网
+node scripts/selftest.mjs          # 23 项，秒级，不联网
+node scripts/regressions.mjs       # 9 项，实测回归；新发现的 bug 往这里加
 node bin/codex-purge.js --verify   # 端到端抓包（需要 codex）
 node scripts/compat-scan.mjs       # 上游依赖探针
 ```

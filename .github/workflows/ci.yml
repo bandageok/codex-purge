@@ -22,6 +22,9 @@ jobs:
       - name: selftest
         run: node scripts/selftest.mjs
 
+      - name: regressions
+        run: node scripts/regressions.mjs
+
   e2e:
     # 端到端验证需要真实 codex CLI：只在 ubuntu + 单一 node 版本跑，避免多平台噪声
     runs-on: ubuntu-latest

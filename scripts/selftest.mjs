@@ -295,6 +295,21 @@ test("paths: 识别 *nix 全局布局（bin/ + lib/node_modules）", () => {
   }
 });
 
+await testAsync("core: 相对 --home 也写出绝对路径（否则 codex 读不到指令层）", async () => {
+  const rel = path.relative(process.cwd(), tmpdir("relhome"));
+  fsutil.ensureDir(rel);
+  fs.writeFileSync(path.join(rel, "config.toml"), 'model = "x"' + String.fromCharCode(10));
+  await core.apply({ home: rel, shims: false, configBlock: true, agentsMd: false });
+  const keys = cfg.readProfileKeys(path.join(rel, "codex-purge.config.toml"));
+  assert.ok(path.isAbsolute(keys.model_instructions_file), `model_instructions_file 不是绝对路径: ${keys.model_instructions_file}`);
+  assert.ok(path.isAbsolute(core.status({ home: rel }).instructions_path));
+  const configText = fs.readFileSync(path.join(rel, "config.toml"), "utf8");
+  const m = configText.match(/model_instructions_file = '([^']+)'/);
+  assert.ok(m && path.isAbsolute(m[1]), `config 受管块里的路径不是绝对路径: ${m && m[1]}`);
+  core.revert({ home: rel });
+  fs.rmSync(path.join(process.cwd(), rel), { recursive: true, force: true });
+});
+
 // ---------------------------------------------------------------- compat-scan
 function fakeBinary(payload) {
   const dir = tmpdir("bin");
@@ -304,7 +319,7 @@ function fakeBinary(payload) {
 }
 
 test("compat-scan: 全部探针命中时报无缺失", () => {
-  const all = PROBES.map((p) => p.key).join(" ");
+  const all = PROBES.map((p) => p.key).join("\u0000");
   const result = scan(fakeBinary(all));
   assert.equal(result.missing.length, 0, `误报缺失: ${result.missing.map((m) => m.key).join(",")}`);
   assert.equal(result.rows.length, PROBES.length);
@@ -312,7 +327,7 @@ test("compat-scan: 全部探针命中时报无缺失", () => {
 });
 
 test("compat-scan: 缺键时报出对应补丁号", () => {
-  const withGap = PROBES.filter((p) => p.patch !== 2).map((p) => p.key).join(" ");
+  const withGap = PROBES.filter((p) => p.patch !== 2).map((p) => p.key).join("\u0000");
   const result = scan(fakeBinary(withGap));
   assert.deepEqual(result.missing.map((m) => m.patch), [2]);
   assert.equal(result.missing[0].key, "model_instructions_file");

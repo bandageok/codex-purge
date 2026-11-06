@@ -12,6 +12,29 @@
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-11-06
+
+这一轮全部靠实测发现：下面四条都不是「看着不对」，而是**复现出来的硬故障**。
+
+### Fixed
+
+- **用户已有同名顶层键 → codex 直接起不来**。若 `config.toml` 顶层已有 `approval_policy` / `sandbox_mode` / `model_instructions_file` 等，受管块会插出重复键，codex 报 `Error loading config.toml: duplicate key` 后拒绝启动。现在写入前把冲突行注释留痕（`# codex-purge 已接管…`），原件仍由 `.codexpurge.bak` 保证字节级回滚。
+- **相对 `--home` 写出相对路径**。`--home .qa/x` 时 profile 里写成 `.qa/x/.../instructions.md`，codex 以 `CODEX_HOME` 为基准再拼一次，路径翻倍并报 `failed to read model instructions file`。现在 `--home`、`status`、`revert`、`verify`、`diff` 全部归一化为绝对路径。
+- **Windows 上 `spawn("codex.cmd")` 抛 EINVAL**（Node 20+ 不再隐式走 shell）。`verify`/`diff` 在没有 `codexJs` 的兜底路径会踩到。新增 `buildSpawnSpec()`：`.cmd`/`.bat` 经 `ComSpec /d /s /c` 转发并按 cmd 规则加引号。
+- **提示词自带受管标记时块分裂**。内容里出现 `<!-- codex-purge:agents:end -->` 会让 AGENTS.md 出现 2 个块，剥离时连用户原文一起吃掉。现在注入前把内容中的标记中和为 HTML 实体。
+
+### Added
+
+- `scripts/regressions.mjs`：9 条实测回归（标记中和、相对路径、uninstall→apply、JSON 契约、只含注释的 config、256KB 提示词、spawn 规格、重复键、用户内容不丢），已接进 CI。
+- 自检 22 → **23 项**（新增 `--home` 绝对路径用例）。
+
+### Verified（本轮实测环境）
+
+- Windows 11 + Node 24.13.0 + `@openai/codex` 0.163.0。
+- 中文+空格路径（`.qa/中文 目录/测试`）：apply → codex 启动 → `approval: never` / `sandbox: danger-full-access`。
+- 55KB 异常提示词（反斜杠、三引号、emoji、制表符、4K 长行）：抓包 51,331 字节，指令层就位，基础指令消失。
+- CRLF 的 `config.toml` 与 `AGENTS.md`：apply → revert 后字节一致。
+
 ## [0.1.3] — 2026-11-04
 
 ### Added
